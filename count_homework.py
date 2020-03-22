@@ -142,16 +142,16 @@ def return_probes(data, CV):
 	return(prob_percent)
 
 def give_percent_del_all(data, CV):
-    eth_list = list(data.ethnicity.unique())
-    result = pd.DataFrame()
-    for eth in eth_list:
-        prob_data = initial_manipulation(data, 'non_probe')
-        non_prob_data = initial_manipulation(data, 'probe')
-        first_ethnicity = find_duplicates(prob_data, non_prob_data, eth)
-        one_eth_prob = return_probes(first_ethnicity, CV)
-        one_eth_prob['Ethnicity'] = eth
-        result.append(one_eth_prob)
-    return(result)
+	eth_list = list(data.ethnicity.unique())
+	result = pd.DataFrame()
+	for eth in eth_list:
+		prob_data = initial_manipulation(data, 'non_probe')
+		non_prob_data = initial_manipulation(data, 'probe')
+		first_ethnicity = find_duplicates(prob_data, non_prob_data, eth)
+		one_eth_prob = return_probes(first_ethnicity, CV)
+		one_eth_prob['Ethnicity'] = eth 
+		result = result.append(one_eth_prob)
+	return(result)
 
 if __name__ == '__main__':
 	if len(sys.argv) < 2:
