@@ -8,8 +8,8 @@ import sys
 
 def initial_manipulation(data, probe):
 	# This is just to get the data in the format I need.
-	data_cols = [col for col in file if col.startswith(probe)]
-	short_data = file.drop(columns = data_cols)
+	data_cols = [col for col in data if col.startswith(probe)]
+	short_data = data.drop(columns = data_cols)
 	return(short_data)
 
 def find_duplicates(data, non_data, chosen_ethnicity):
@@ -118,9 +118,7 @@ def return_probes(data, CV):
 	eth_series = (eth_counts[["percent_del", "percent_dup"]].max(axis=1)).to_frame()
 
 	#2) label problem probes: these should be included in the numbers (we should skip over these probes)
-	print(CV)
 	problem_probes = find_variability(data, CV)
-	print(problem_probes)
 	for index in problem_probes:
 		eth_series.at[int(index), 0] = 0.99
 
@@ -130,33 +128,38 @@ def return_probes(data, CV):
 		if row[0]> 0.7:
 			del_list.append(index)
 	sorted_del_list = sorted(del_list) # just in case, sort the list
-	print(sorted_del_list)
 
 	#4) get list of continuious probes len >4
 	cont_probe_list = list(find_continuious(sorted_del_list))
-	print(cont_probe_list)
 	len_4_list = []
 	for sub_list in cont_probe_list:
-		print(len(sub_list))
 		if len(sub_list) >3:
-			print(sub_list)
+			print(sub_list, "sublist in return_probes ")
 			len_4_list.append(sub_list)
 	concat_list = [j for i in len_4_list for j in i]
 	concat_list_str = [str(i).zfill(2) for i in concat_list] 
-	print(concat_list_str)
 	prob_percent = eth_counts_short[eth_counts_short.number.isin((concat_list_str))]
 	return(prob_percent)
+
+def give_percent_del_all(data, CV):
+    eth_list = list(data.ethnicity.unique())
+    result = pd.DataFrame()
+    for eth in eth_list:
+        prob_data = initial_manipulation(data, 'non_probe')
+        non_prob_data = initial_manipulation(data, 'probe')
+        first_ethnicity = find_duplicates(prob_data, non_prob_data, eth)
+        one_eth_prob = return_probes(first_ethnicity, CV)
+        one_eth_prob['Ethnicity'] = eth
+        result.append(one_eth_prob)
+    return(result)
 
 if __name__ == '__main__':
 	if len(sys.argv) < 2:
 		print("please provide file name")
 		exit(1)
-	file = pd.read_csv(sys.argv[1], index_col =0)
-	prob_data = initial_manipulation(file, 'non_probe')
-	non_prob_data = initial_manipulation(file, 'probe')
+	new_file = pd.read_csv(sys.argv[1], index_col =0)
 	file_name = "test_output.csv"
-	A_ethnicity = find_duplicates(prob_data, non_prob_data, 'A')
-	test1 = return_probes(A_ethnicity, 0.10)
+	test1 = give_percent_del_all(new_file, 0.15)
 	test1.to_csv(file_name, index = False)
 	print(file_name, "file created")
 	
