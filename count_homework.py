@@ -15,10 +15,10 @@ def initial_manipulation(data, probe):
 def find_duplicates(data, non_data, chosen_ethnicity):
     # Steps (from above)
     # 1) Characterize the non_ probes by finding the mean value for the sample
-    # 2) For each sample divide the mean non_ probe value by the individual probes counts
-    # 3) Find probematic probes by examining the variability of those counts
+    # 2) For each sample divide the mean non_ probe value by the individual probe counts
+    # 3) Find problematic probes by examining the variability of those counts
     # 4) Label each probe as deletions/duplications
-    # seperate out one ethnicity
+    # separate out one ethnicity
     data_eth = data.loc[data.ethnicity == chosen_ethnicity].copy()
     non_eth = non_data.loc[non_data.ethnicity == chosen_ethnicity].copy()
     # Dropping old Name columns so we don't have problems when dividing later
@@ -26,7 +26,7 @@ def find_duplicates(data, non_data, chosen_ethnicity):
     data_eth.drop(columns =["ethnicity"], inplace = True) 
     mean_sample = pd.Series(non_eth.mean(1)) # one indicates find mean of each row
     data_divide = data_eth.div(mean_sample, axis = 0) 
-    # for data visulization, and subsequent steps, I want one long column of data
+    # for data visualization, and subsequent steps, I want one long column of data
     # to do this I need one long column of data
     # melt will stack the columns as I need them
     my_columns = [col for col in data if col.startswith('probe_')]
@@ -42,13 +42,13 @@ def find_duplicates(data, non_data, chosen_ethnicity):
 
 def find_duplicates_non(non_data, chosen_ethnicity):
     # Steps (see find_duplicates)
-    # seperate out one ethnicity
+    # separate out one ethnicity
     non_eth = non_data.loc[non_data.ethnicity == chosen_ethnicity].copy()
     # Dropping old Name columns so we don't have problems when dividing later
     non_eth.drop(columns =["ethnicity"], inplace = True)
     mean_sample = pd.Series(non_eth.mean(1)) # one indicates find mean of each row
     data_divide = non_eth.div(mean_sample, axis = 0)
-    # for data visulization, and subsequent steps, I want one long column of data
+    # for data visualization, and subsequent steps, I want one long column of data
     # to do this I need one long column of data
     # melt will stack the columns as I need them
     my_columns = [col for col in non_data if col.startswith('non_probe_')]
@@ -96,7 +96,7 @@ def label_duplicates(data):
     count_data.reset_index(level=0, inplace=True)
     return(count_data)
 
-def find_continuious(x): 
+def find_continuous(x): 
     it = iter(x) # creates an object which can be iterated one element at a time    
     prev = next(it) # the next item in the list (starts with 0)
     result = [] 
@@ -112,7 +112,7 @@ def find_continuious(x):
 
 def return_probes(data, CV):
     #Steps:
-    #1) find percent duplicaitons and deletions (this must be in the answer)
+    #1) find percent duplications and deletions (this must be in the answer)
     eth_counts = label_duplicates(data)
     eth_counts_short = eth_counts[['number', 'percent_del', 'percent_dup']]
     eth_series = (eth_counts[["percent_del", "percent_dup"]].max(axis=1)).to_frame()
@@ -125,16 +125,15 @@ def return_probes(data, CV):
     #3) get list of max values
     del_list = []
     for index, row in eth_series.iterrows():
-        if row[0]> 0.7:
+        if row[0]> 0.6:
             del_list.append(index)
     sorted_del_list = sorted(del_list) # just in case, sort the list
 
-    #4) get list of continuious probes len >4
-    cont_probe_list = list(find_continuious(sorted_del_list))
+    #4) get list of continuous probes len >4
+    cont_probe_list = list(find_continuous(sorted_del_list))
     len_4_list = []
     for sub_list in cont_probe_list:
         if len(sub_list) >3:
-            print(sub_list, "sublist in return_probes ")
             len_4_list.append(sub_list)
     concat_list = [j for i in len_4_list for j in i]
     concat_list_str = [str(i).zfill(2) for i in concat_list] 
@@ -154,12 +153,15 @@ def give_percent_del_all(data, CV):
     return(result)
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print("please provide file name")
+    if len(sys.argv) < 3:
+        print("please provide file name and CV in that order")
         exit(1)
+    new_CV = float(sys.argv[2])
     new_file = pd.read_csv(sys.argv[1], index_col =0)
+    print("file loaded", sys.argv[1])
     file_name = "test_output.csv"
-    test1 = give_percent_del_all(new_file, 0.15)
+    test1 = give_percent_del_all(new_file, new_CV)
+    print("data run with CV:", new_CV)
     test1.to_csv(file_name, index = False)
     print(file_name, "file created")
     
